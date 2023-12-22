@@ -1,4 +1,3 @@
-﻿public record HashedFile(string Path)
-{
-    public long Size => new FileInfo(Path).Length;
-};
+﻿namespace ImageDedup.Shared;
+
+public record HashedFile(string Path);

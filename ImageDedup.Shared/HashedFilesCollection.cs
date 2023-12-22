@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 
+namespace ImageDedup.Shared;
+
 public class HashedFilesCollection
 {
     private readonly Dictionary<HashValue, List<HashedFile>> _hashedFiles = new();
@@ -12,7 +14,7 @@ public class HashedFilesCollection
         _logger = logger;
     }
 
-    public (bool, DuplicatedFilesCollection) Add(ulong hash, string path)
+    public bool Add(ulong hash, string path)
     {
         bool isHit;
         var hashValue = new HashValue(hash);
@@ -36,10 +38,17 @@ public class HashedFilesCollection
         {
             _hits++;
             _logger.LogInformation("Hit for hash {0}: \n{1}", hash, string.Join("\n", hashedFiles));
-            return (true, new DuplicatedFilesCollection(hashValue, hashedFiles));
+            return true;
         }
 
-        return (false, DuplicatedFilesCollection.Empty);
+        return false;
+    }
+
+    internal DuplicatedFilesCollection Get(ulong hash)
+    {
+        var hashValue = new HashValue(hash);
+        var hashedFiles = _hashedFiles[hashValue];
+        return new(hashValue, hashedFiles);
     }
 
     public int Total => _total;

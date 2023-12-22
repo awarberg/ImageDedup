@@ -1,4 +1,6 @@
-﻿public record HashValue(ulong Hash)
+﻿namespace ImageDedup.Shared;
+
+public record HashValue(ulong Hash)
 {
     public static readonly HashValue Empty = new(0);
 }

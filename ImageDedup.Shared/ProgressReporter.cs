@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
+namespace ImageDedup.Shared;
+
 public record ProgressReporter(HashedFilesCollection HashedFilesCollection, TimeSpan Interval, ILogger Logger, CancellationTokenSource CancellationTokenSource)
 {
     private readonly PeriodicTimer _progressReporter = new(Interval);

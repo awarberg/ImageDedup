@@ -1,6 +1,7 @@
 ﻿using CoenM.ImageHash.HashAlgorithms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ImageDedup.Shared;
 
 ServiceProvider serviceProvider = new ServiceCollection()
     .AddLogging((loggingBuilder) => loggingBuilder
@@ -10,7 +11,7 @@ ServiceProvider serviceProvider = new ServiceCollection()
 
 var Folders = new[] { "Q:\\Google\\Photos" };
 var FileExtensions = new[] { "*.png", "*.jpg" };
-var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<Program>();
+var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
 
 CancellationTokenSource cts = new();
 PerceptualHash hashAlgorithm = new();

@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using System.IO.Enumeration;
 
+namespace ImageDedup.Shared;
+
 public record ImageSourceProcessor(
     IEnumerable<string> Folders,
     IEnumerable<string> FileExtensions,
@@ -21,8 +23,10 @@ public record ImageSourceProcessor(
             {
                 using var fileStream = File.OpenRead(filePath);
                 var hash = HashAlgorithm.Hash(fileStream);
-                var (hit, duplicatedFilesCollection) = HashedFilesCollection.Add(hash, filePath);
-                if (hit) yield return duplicatedFilesCollection;
+                if (HashedFilesCollection.Add(hash, filePath))
+                {
+                    yield return HashedFilesCollection.Get(hash);
+                }
             }
         }
     }
