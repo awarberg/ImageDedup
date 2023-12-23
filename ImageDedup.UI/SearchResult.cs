@@ -6,24 +6,34 @@ namespace ImageDedup.UI;
 
 public partial class SearchResult : ObservableObject
 {
+    public SearchResult()
+    {
+        Files.ListChanged += Files_ListChanged;
+    }
+
+    private void Files_ListChanged(object? sender, ListChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(Files));
+        OnPropertyChanged(nameof(Count));
+    }
+
     [ObservableProperty]
     private ulong _hash;
 
-    public int Count => Files.Count;
+    public BindingList<DuplicateFile> Files { get; } = [];
 
-    public BindingList<DuplicateFile> Files { get; } = new();
+    public int Count => Files.Count;
 
     public void Merge(DuplicatedFilesCollection duplicatedFilesCollection)
     {
         foreach (var file in duplicatedFilesCollection.Files)
         {
-            var duplicateFile = DuplicateFile.From(file);
-            if (!Files.Contains(duplicateFile))
+            if (!Files.Any(f => f.Path.Equals(file.Path)))
             {
+                var duplicateFile = DuplicateFile.From(file);
                 Files.Add(duplicateFile);
             }
         }
-        OnPropertyChanged(nameof(Count));
     }
 
     public static SearchResult From(DuplicatedFilesCollection duplicatedFilesCollection)

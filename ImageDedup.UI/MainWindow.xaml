@@ -7,8 +7,8 @@
         xmlns:local="clr-namespace:ImageDedup.UI" 
         Closing="Window_Closing"
         mc:Ignorable="d"
-        Width="800"
-        Height="600">
+        Width="1000"
+        Height="800">
     <Window.Resources>
         <local:FormatKbSizeConverter x:Key="FormatKbSizeConverter" />
         <local:GetImageDimensions x:Key="GetImageDimensions" />
@@ -25,6 +25,8 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <ToolBarTray Grid.Row="0" Grid.ColumnSpan="2">
+            <ToolBarTray.Resources>
+            </ToolBarTray.Resources>
             <ToolBar>
                 <Label>Search:</Label>
                 <Button Content="Start" Click="StartSearch_Click" IsEnabled="{Binding CanStartSearch}" />
@@ -54,21 +56,33 @@
                       ItemsSource="{Binding SearchResults}" 
                       AutoGenerateColumns="False">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Hash}" IsReadOnly="True" Header="Hash"/>
-                    <DataGridTextColumn Binding="{Binding Count}" IsReadOnly="True" Header="Count"/>
+                    <DataGridTextColumn Binding="{Binding Hash, Mode=OneWay}" Header="Hash"/>
+                    <DataGridTextColumn Binding="{Binding Count, Mode=OneWay}" Header="Count"/>
                 </DataGrid.Columns>
             </DataGrid>
         </DockPanel>
-        <StackPanel Grid.Row="2" Grid.Column="1">
-            <ListView ItemsSource="{Binding ElementName=Master, Path=SelectedItem.Files}">
+        <Grid Grid.Row="2" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <ListView Grid.Row="0"
+                      Name="DuplicateImages"
+                      ItemsSource="{Binding ElementName=Master, Path=SelectedItem.Files}"
+                      SelectionMode="Multiple">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                    </Style>
+                </ListView.ItemContainerStyle>
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top"/>
                     </ItemsPanelTemplate>
                 </ListView.ItemsPanel>
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Vertical" VerticalAlignment="Stretch">
+                        <StackPanel>
                             <Image Source="{Binding Path}" 
                                    HorizontalAlignment="Center" 
                                    VerticalAlignment="Top" 
@@ -76,11 +90,33 @@
                             <TextBlock>Path: <TextBlock Text="{Binding Path}" /></TextBlock>
                             <TextBlock>Size: <TextBlock Text="{Binding Size, Converter={StaticResource FormatKbSizeConverter}}" /></TextBlock>
                             <TextBlock>Dimensions: <TextBlock Text="{Binding Path, Converter={StaticResource GetImageDimensions}}"/></TextBlock>
+                            <CheckBox IsChecked="{Binding IsSelected}" Content="Mark for deletion" />
                         </StackPanel>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-        </StackPanel>
+            <StackPanel Grid.Row="1">
+                <TextBlock FontSize="16"
+                           Margin="5 5 5 5">Files marked for deletion (<TextBlock Text="{Binding MarkedDuplicates.Count}" />)</TextBlock>
+                <ListBox Name="MarkedDuplicates" ItemsSource="{Binding MarkedDuplicates}">
+                    <ListBox.InputBindings>
+                        <KeyBinding Key="Delete" 
+                                    Command="{Binding ElementName=MarkedDuplicates, Path=SelectedItem.UnselectCommand}"/>
+                    </ListBox.InputBindings>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Label Content="{Binding Path}">
+                                <Label.InputBindings>
+                                    <MouseBinding Gesture="LeftDoubleClick"
+                                                  Command="{Binding OpenInDefaultAppCommand}"/>
+                                </Label.InputBindings>
+                            </Label>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Button>Delete marked files</Button>
+            </StackPanel>
+        </Grid>
         <StatusBar Grid.Row="3" Grid.ColumnSpan="2">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>

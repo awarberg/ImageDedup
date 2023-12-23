@@ -27,6 +27,10 @@ public record ImageSourceProcessor(
                 {
                     yield return HashedFilesCollection.Get(hash);
                 }
+                if (CancellationToken.IsCancellationRequested)
+                {
+                    yield break;
+                }
             }
         }
     }

@@ -6,7 +6,23 @@ namespace ImageDedup.UI;
 
 public partial class ViewModel : ObservableObject
 {
+    public ViewModel()
+    {
+        SearchResults.ListChanged += SearchResults_ListChanged;
+    }
+
+    private void SearchResults_ListChanged(object? sender, ListChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(MarkedDuplicates));
+    }
+
     [ObservableProperty]
+    [NotifyPropertyChangedFor(
+        nameof(CanStartSearch),
+        nameof(CanStopSearch),
+        nameof(CanResetSearch),
+        nameof(CanAddFolder),
+        nameof(CanRemoveFolders))]
     private AppStatus _appStatus = AppStatus.Ready;
 
     public bool CanStartSearch => AppStatus == AppStatus.Ready;
@@ -15,24 +31,17 @@ public partial class ViewModel : ObservableObject
     public bool CanAddFolder => AppStatus == AppStatus.Ready;
     public bool CanRemoveFolders => AppStatus == AppStatus.Ready;
 
+    public BindingList<string> SearchFolders { get; } = [];
+
+    public BindingList<SearchResult> SearchResults { get; } = [];
+
+    public IReadOnlyList<DuplicateFile> MarkedDuplicates => SearchResults
+        .SelectMany(sr => sr.Files.Where(df => df.IsSelected))
+        .OrderBy(df => df.Path)
+        .ToList();
+
     [ObservableProperty]
-    private Exception _lastException;
-
-    public BindingList<string> SearchFolders { get; } = new();
-
-    public BindingList<SearchResult> SearchResults { get; } = new();
-
-    public void Update(AppStatus appStatus)
-    {
-        AppStatus = appStatus;
-
-        OnPropertyChanged(nameof(CanStartSearch));
-        OnPropertyChanged(nameof(CanStopSearch));
-        OnPropertyChanged(nameof(CanResetSearch));
-
-        OnPropertyChanged(nameof(CanAddFolder));
-        OnPropertyChanged(nameof(CanRemoveFolders));
-    }
+    private Exception? _lastException;
 
     public void AddOrMerge(DuplicatedFilesCollection duplicatedFilesCollection)
     {
@@ -46,13 +55,11 @@ public partial class ViewModel : ObservableObject
         {
             previous.Merge(duplicatedFilesCollection);
         }
-        OnPropertyChanged(nameof(SearchResults));
     }
 
     public void Reset()
     {
         SearchResults.Clear();
-        OnPropertyChanged(nameof(SearchResults));
-        Update(AppStatus.Ready);
+        AppStatus = AppStatus.Ready;
     }
 }

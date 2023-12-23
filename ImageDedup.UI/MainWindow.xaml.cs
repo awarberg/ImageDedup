@@ -18,7 +18,7 @@ public partial class MainWindow : Window
         _logger = logger;
         _cancellationTokenSource = cancellationTokenSource;
         _viewModel.SearchFolders.Add(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures));
-        _viewModel.Update(AppStatus.Ready);
+        _viewModel.AppStatus = AppStatus.Ready;
         DataContext = _viewModel;
         InitializeComponent();
     }
@@ -27,7 +27,7 @@ public partial class MainWindow : Window
 
     private async void StartSearch_Click(object sender, EventArgs e)
     {
-        _viewModel.Update(AppStatus.Searching);
+        _viewModel.AppStatus = AppStatus.Searching;
 
         var FileExtensions = new[] { "*.png", "*.jpg" };
         PerceptualHash hashAlgorithm = new();
@@ -44,12 +44,12 @@ public partial class MainWindow : Window
                 }
             });
 
-            _viewModel.Update(AppStatus.Completed);
+            _viewModel.AppStatus = AppStatus.Completed;
         }
         catch (Exception ex)
         {
             _viewModel.LastException = ex;
-            _viewModel.Update(AppStatus.Failed);
+            _viewModel.AppStatus = AppStatus.Failed;
         }
     }
 
@@ -61,6 +61,7 @@ public partial class MainWindow : Window
     private void ResetSearch_Click(object sender, EventArgs e)
     {
         _viewModel.Reset();
+        _cancellationTokenSource.TryReset();
     }
 
     private void AddFolder_Click(object sender, EventArgs e)
