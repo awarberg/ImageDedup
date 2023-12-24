@@ -1,6 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System.ComponentModel;
 using ImageDedup.Shared;
+using CommunityToolkit.Mvvm.Input;
+using System.Windows;
+using Microsoft.VisualBasic.FileIO;
 
 namespace ImageDedup.UI;
 
@@ -14,6 +17,7 @@ public partial class ViewModel : ObservableObject
     private void SearchResults_ListChanged(object? sender, ListChangedEventArgs e)
     {
         OnPropertyChanged(nameof(MarkedDuplicates));
+        DeleteMarkedDuplicatesCommand.NotifyCanExecuteChanged();
     }
 
     [ObservableProperty]
@@ -41,7 +45,32 @@ public partial class ViewModel : ObservableObject
         .ToList();
 
     [ObservableProperty]
+    private bool _useRecycleBin = true;
+
+    [ObservableProperty]
     private Exception? _lastException;
+
+    [RelayCommand(CanExecute = nameof(CanDeleteMarkedDuplicates))]
+    private void DeleteMarkedDuplicates()
+    {
+        var markedDuplicates = MarkedDuplicates;
+        MessageBoxResult messageBoxResult = MessageBox.Show($"Delete {markedDuplicates.Count} file(s)?", "Delete Confirmation", System.Windows.MessageBoxButton.YesNo);
+        if (messageBoxResult == MessageBoxResult.Yes)
+        {
+            foreach (var duplicateFile in markedDuplicates)
+            {
+                FileSystem.DeleteFile(duplicateFile.Path,
+                    UIOption.OnlyErrorDialogs,
+                    UseRecycleBin ?
+                        RecycleOption.SendToRecycleBin :
+                        RecycleOption.DeletePermanently);
+                duplicateFile.IsDeleted = true;
+            }
+        }
+    }
+
+    private bool CanDeleteMarkedDuplicates =>
+        SearchResults.Any(sr => sr.Files.Any(f => f.IsSelected));
 
     public void AddOrMerge(DuplicatedFilesCollection duplicatedFilesCollection)
     {

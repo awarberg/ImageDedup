@@ -8,7 +8,8 @@
         Closing="Window_Closing"
         mc:Ignorable="d"
         Width="1000"
-        Height="800">
+        Height="800"
+        FontSize="16">
     <Window.Resources>
         <local:FormatKbSizeConverter x:Key="FormatKbSizeConverter" />
         <local:GetImageDimensions x:Key="GetImageDimensions" />
@@ -25,8 +26,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <ToolBarTray Grid.Row="0" Grid.ColumnSpan="2">
-            <ToolBarTray.Resources>
-            </ToolBarTray.Resources>
             <ToolBar>
                 <Label>Search:</Label>
                 <Button Content="Start" Click="StartSearch_Click" IsEnabled="{Binding CanStartSearch}" />
@@ -42,13 +41,13 @@
         </ToolBarTray>
         <Border Grid.Row="1" Grid.ColumnSpan="2">
             <StackPanel>
-                <Label HorizontalAlignment="Left">Search Folders:</Label>
+                <Label HorizontalAlignment="Left" FontWeight="Bold">Search Folders:</Label>
                 <ListBox Name="SearchFolders" ItemsSource="{Binding SearchFolders}" />
             </StackPanel>
         </Border>
         <DockPanel Grid.Row="2" Grid.Column="0">
             <Label DockPanel.Dock="Top" 
-                   FontSize="16">
+                   FontWeight="Bold">
                 Potential duplicates
             </Label>
             <DataGrid DockPanel.Dock="Bottom"
@@ -83,7 +82,7 @@
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <StackPanel>
-                            <Image Source="{Binding Path}" 
+                            <Image Source="{Binding Data}" 
                                    HorizontalAlignment="Center" 
                                    VerticalAlignment="Top" 
                                    MaxHeight="300" />
@@ -96,8 +95,8 @@
                 </ListView.ItemTemplate>
             </ListView>
             <StackPanel Grid.Row="1">
-                <TextBlock FontSize="16"
-                           Margin="5 5 5 5">Files marked for deletion (<TextBlock Text="{Binding MarkedDuplicates.Count}" />)</TextBlock>
+                <TextBlock FontWeight="Bold"
+                           Margin="5 5 5 5">Files marked for deletion (<TextBlock Text="{Binding MarkedDuplicates.Count}" />):</TextBlock>
                 <ListBox Name="MarkedDuplicates" ItemsSource="{Binding MarkedDuplicates}">
                     <ListBox.InputBindings>
                         <KeyBinding Key="Delete" 
@@ -114,7 +113,10 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <Button>Delete marked files</Button>
+                <StackPanel Orientation="Horizontal">
+                    <CheckBox VerticalAlignment="Center" Content="Use recycle bin" IsChecked="{Binding UseRecycleBin}"/>
+                    <Button Command="{Binding DeleteMarkedDuplicatesCommand}">Delete marked files</Button>
+                </StackPanel>
             </StackPanel>
         </Grid>
         <StatusBar Grid.Row="3" Grid.ColumnSpan="2">

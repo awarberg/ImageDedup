@@ -12,8 +12,14 @@ public partial class DuplicateFile(string path) : ObservableObject
 
     public long Size => new FileInfo(Path).Length;
 
+    /// Copy of the data to avoid locking the file for later deletion
+    public byte[] Data => File.ReadAllBytes(path);
+
     [ObservableProperty]
     private bool _isSelected;
+
+    [ObservableProperty]
+    public bool _isDeleted;
 
     [RelayCommand]
     private void OpenInDefaultApp()

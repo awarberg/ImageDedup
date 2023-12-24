@@ -13,6 +13,14 @@ public partial class SearchResult : ObservableObject
 
     private void Files_ListChanged(object? sender, ListChangedEventArgs e)
     {
+        if (e.ListChangedType == ListChangedType.ItemChanged)
+        {
+            var duplicatedFile = Files[e.NewIndex];
+            if (duplicatedFile.IsDeleted)
+            {
+                Files.RemoveAt(e.NewIndex);
+            }
+        }
         OnPropertyChanged(nameof(Files));
         OnPropertyChanged(nameof(Count));
     }
