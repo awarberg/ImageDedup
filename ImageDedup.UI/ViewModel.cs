@@ -40,13 +40,13 @@ public partial class ViewModel : ObservableObject
     public BindingList<string> SearchFolders { get; } = [];
 
     [ObservableProperty]
-    public string _currentFolder;
+    public string? _currentFolder;
 
     [ObservableProperty]
-    public string _totalFiles;
+    public string? _totalFiles;
 
     [ObservableProperty]
-    public string _filesPerSecond;
+    public string? _filesPerSecond;
 
     public BindingList<SearchResult> SearchResults { get; }
 
@@ -73,6 +73,7 @@ public partial class ViewModel : ObservableObject
         {
             foreach (var duplicateFile in markedDuplicates)
             {
+                // TODO: Recycle bin does not work for network shares.
                 FileSystem.DeleteFile(duplicateFile.Path,
                     UIOption.OnlyErrorDialogs,
                     UseRecycleBin ?
@@ -86,7 +87,7 @@ public partial class ViewModel : ObservableObject
     private bool CanDeleteMarkedDuplicates =>
         SearchResults.Any(sr => sr.Files.Any(f => f.IsSelected));
 
-    public CancellationTokenSource CancellationTokenSource { get; internal set; }
+    public CancellationTokenSource? CancellationTokenSource { get; internal set; }
 
     public void AddOrMerge(DuplicatedFilesCollection duplicatedFilesCollection)
     {

@@ -9,7 +9,7 @@ ServiceProvider serviceProvider = new ServiceCollection()
         .AddConsole())
     .BuildServiceProvider();
 
-var Folders = new[] { "Q:\\Google\\Photos" };
+var Folders = new[] { Environment.GetFolderPath(Environment.SpecialFolder.MyPictures) };
 var FileExtensions = new[] { "*.png", "*.jpg" };
 var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
 
@@ -20,8 +20,12 @@ ImageSourceProcessor imageSourceProcessor = new(Folders, FileExtensions, hashAlg
 ProgressReporter progressReporter = new(hashedFilesCollection, TimeSpan.FromMilliseconds(500), logger, cts);
 
 Task.Run(progressReporter.Invoke);
-Task.Run(imageSourceProcessor.Invoke).ContinueWith(_ => cts.Cancel());
+Task.Run(() => imageSourceProcessor.Invoke().Count()).ContinueWith(_ =>
+{
+    logger.LogInformation("Scan complete. Press any key to exit.");
+    cts.Cancel();
+});
 
-Console.WriteLine("Press CTRL+C to cancel...");
+Console.WriteLine("Scanning for duplicates... press CTRL+C to cancel.");
 Console.ReadKey();
 cts.Cancel();

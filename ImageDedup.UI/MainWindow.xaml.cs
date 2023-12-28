@@ -64,7 +64,7 @@ public partial class MainWindow : Window
 
     private void StopSearch_Click(object sender, EventArgs e)
     {
-        _viewModel.CancellationTokenSource.Cancel();
+        _viewModel.CancellationTokenSource?.Cancel();
     }
 
     private void ResetSearch_Click(object sender, EventArgs e)
