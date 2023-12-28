@@ -9,8 +9,10 @@ namespace ImageDedup.UI;
 
 public partial class ViewModel : ObservableObject
 {
+    private readonly List<SearchResult> _backingSearchResults = [];
     public ViewModel()
     {
+        SearchResults = new(_backingSearchResults);
         SearchResults.ListChanged += SearchResults_ListChanged;
     }
 
@@ -37,12 +39,24 @@ public partial class ViewModel : ObservableObject
 
     public BindingList<string> SearchFolders { get; } = [];
 
-    public BindingList<SearchResult> SearchResults { get; } = [];
+    [ObservableProperty]
+    public string _currentFolder;
+
+    [ObservableProperty]
+    public string _totalFiles;
+
+    [ObservableProperty]
+    public string _filesPerSecond;
+
+    public BindingList<SearchResult> SearchResults { get; }
 
     public IReadOnlyList<DuplicateFile> MarkedDuplicates => SearchResults
         .SelectMany(sr => sr.Files.Where(df => df.IsSelected))
         .OrderBy(df => df.Path)
         .ToList();
+
+    [ObservableProperty]
+    private int _previewHeight = 300;
 
     [ObservableProperty]
     private bool _useRecycleBin = true;
@@ -72,13 +86,17 @@ public partial class ViewModel : ObservableObject
     private bool CanDeleteMarkedDuplicates =>
         SearchResults.Any(sr => sr.Files.Any(f => f.IsSelected));
 
+    public CancellationTokenSource CancellationTokenSource { get; internal set; }
+
     public void AddOrMerge(DuplicatedFilesCollection duplicatedFilesCollection)
     {
         var previous = SearchResults
             .FirstOrDefault(dfc => dfc.Hash == duplicatedFilesCollection.HashValue.Hash);
         if (previous is null)
         {
-            SearchResults.Add(SearchResult.From(duplicatedFilesCollection));
+            _backingSearchResults.Add(SearchResult.From(duplicatedFilesCollection));
+            _backingSearchResults.Sort((x, y) => Comparer<ulong>.Default.Compare(x.Hash, y.Hash));
+            SearchResults.ResetBindings();
         }
         else
         {
@@ -88,7 +106,15 @@ public partial class ViewModel : ObservableObject
 
     public void Reset()
     {
+        ResetProgress();
         SearchResults.Clear();
         AppStatus = AppStatus.Ready;
+    }
+
+    public void ResetProgress()
+    {
+        CurrentFolder = string.Empty;
+        TotalFiles = string.Empty;
+        FilesPerSecond = string.Empty;
     }
 }

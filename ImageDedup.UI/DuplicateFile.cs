@@ -12,8 +12,9 @@ public partial class DuplicateFile(string path) : ObservableObject
 
     public long Size => new FileInfo(Path).Length;
 
+    private Lazy<byte[]> _getBytes = new(() => File.ReadAllBytes(path));
     /// Copy of the data to avoid locking the file for later deletion
-    public byte[] Data => File.ReadAllBytes(path);
+    public byte[] Data => _getBytes.Value;
 
     [ObservableProperty]
     private bool _isSelected;

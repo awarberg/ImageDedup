@@ -9,7 +9,8 @@
         mc:Ignorable="d"
         Width="1000"
         Height="800"
-        FontSize="16">
+        FontSize="16"
+        Name="ParentWindow">
     <Window.Resources>
         <local:FormatKbSizeConverter x:Key="FormatKbSizeConverter" />
         <local:GetImageDimensions x:Key="GetImageDimensions" />
@@ -41,28 +42,32 @@
         </ToolBarTray>
         <Border Grid.Row="1" Grid.ColumnSpan="2">
             <StackPanel>
-                <Label HorizontalAlignment="Left" FontWeight="Bold">Search Folders:</Label>
+                <TextBlock HorizontalAlignment="Left" FontWeight="Bold">
+                    Search folders (<TextBlock Text="{Binding ElementName=SearchFolders, Path=Items.Count}"/>): 
+                </TextBlock>
                 <ListBox Name="SearchFolders" ItemsSource="{Binding SearchFolders}" />
             </StackPanel>
         </Border>
         <DockPanel Grid.Row="2" Grid.Column="0">
-            <Label DockPanel.Dock="Top" 
+            <TextBlock DockPanel.Dock="Top" 
                    FontWeight="Bold">
-                Potential duplicates
-            </Label>
+                Potential duplicates (<TextBlock Text="{Binding ElementName=Master, Path=Items.Count}" />):
+            </TextBlock>
             <DataGrid DockPanel.Dock="Bottom"
                       Name="Master"
                       ItemsSource="{Binding SearchResults}" 
-                      AutoGenerateColumns="False">
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Hash, Mode=OneWay}" Header="Hash"/>
-                    <DataGridTextColumn Binding="{Binding Count, Mode=OneWay}" Header="Count"/>
+                    <DataGridTextColumn Binding="{Binding Hash}" Header="Hash"/>
+                    <DataGridTextColumn Binding="{Binding Count}" Header="Count"/>
                 </DataGrid.Columns>
             </DataGrid>
         </DockPanel>
         <Grid Grid.Row="2" Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <ListView Grid.Row="0"
@@ -76,7 +81,7 @@
                 </ListView.ItemContainerStyle>
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top"/>
+                        <WrapPanel Margin="0"/>
                     </ItemsPanelTemplate>
                 </ListView.ItemsPanel>
                 <ListView.ItemTemplate>
@@ -85,7 +90,7 @@
                             <Image Source="{Binding Data}" 
                                    HorizontalAlignment="Center" 
                                    VerticalAlignment="Top" 
-                                   MaxHeight="300" />
+                                   MaxHeight="{Binding ElementName=ParentWindow, Path=DataContext.PreviewHeight}" />
                             <TextBlock>Path: <TextBlock Text="{Binding Path}" /></TextBlock>
                             <TextBlock>Size: <TextBlock Text="{Binding Size, Converter={StaticResource FormatKbSizeConverter}}" /></TextBlock>
                             <TextBlock>Dimensions: <TextBlock Text="{Binding Path, Converter={StaticResource GetImageDimensions}}"/></TextBlock>
@@ -94,7 +99,11 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-            <StackPanel Grid.Row="1">
+            <DockPanel Grid.Row="1">
+                <Label>Preview size:</Label>
+                <Slider Value="{Binding PreviewHeight}" VerticalAlignment="Center" Minimum="10" Maximum="1000"/>
+            </DockPanel>
+            <StackPanel Grid.Row="2">
                 <TextBlock FontWeight="Bold"
                            Margin="5 5 5 5">Files marked for deletion (<TextBlock Text="{Binding MarkedDuplicates.Count}" />):</TextBlock>
                 <ListBox Name="MarkedDuplicates" ItemsSource="{Binding MarkedDuplicates}">
@@ -114,7 +123,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
                 <StackPanel Orientation="Horizontal">
-                    <CheckBox VerticalAlignment="Center" Content="Use recycle bin" IsChecked="{Binding UseRecycleBin}"/>
+                    <CheckBox VerticalAlignment="Center" Content="Use recycle bin " IsChecked="{Binding UseRecycleBin}"/>
                     <Button Command="{Binding DeleteMarkedDuplicatesCommand}">Delete marked files</Button>
                 </StackPanel>
             </StackPanel>
@@ -122,25 +131,18 @@
         <StatusBar Grid.Row="3" Grid.ColumnSpan="2">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition />
-                        </Grid.ColumnDefinitions>
-                    </Grid>
+                    <StackPanel Orientation="Horizontal" />
                 </ItemsPanelTemplate>
             </StatusBar.ItemsPanel>
             <StatusBarItem Grid.Column="0">
                 <TextBlock Text="{Binding AppStatus}" />
             </StatusBarItem>
-            <Separator Grid.Column="1"/>
-            <StatusBarItem Grid.Column="2">
-                <StackPanel Orientation="Horizontal">
-                    <Label>Search results:</Label>
-                    <Label Content="{Binding SearchResults.Count}" />
-                </StackPanel>
-            </StatusBarItem>
+            <Separator Grid.Column="1" />
+            <TextBlock>Current folder: <TextBlock Text="{Binding CurrentFolder}" /></TextBlock>
+            <Separator />
+            <TextBlock>Total files: <TextBlock Text="{Binding TotalFiles}" /></TextBlock>
+            <Separator />
+            <TextBlock>Files per second: <TextBlock Text="{Binding FilesPerSecond}" /></TextBlock>
         </StatusBar>
     </Grid>
 </Window>

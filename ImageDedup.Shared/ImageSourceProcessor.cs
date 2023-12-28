@@ -1,5 +1,6 @@
 ﻿using CoenM.ImageHash;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.IO.Enumeration;
 
 namespace ImageDedup.Shared;
@@ -12,26 +13,51 @@ public record ImageSourceProcessor(
     ILogger Logger,
     CancellationToken CancellationToken)
 {
+    public event EventHandler? ProgressUpdate;
+
     public IEnumerable<DuplicatedFilesCollection> Invoke()
     {
+        var stopwatch = Stopwatch.StartNew();
         EnumerationOptions enumerationOptions = new() { RecurseSubdirectories = true };
-        foreach (var folder in Folders)
+        var paths = Folders
+            .SelectMany(f => Directory.EnumerateFiles(f, "*.*", enumerationOptions))
+            .Where(path => FileExtensions.Any(ext => FileSystemName.MatchesSimpleExpression(ext, path)));
+        var lastProgressUpdate = TimeSpan.Zero;
+        var totalFiles = 0;
+        foreach (var path in paths)
         {
-            var matchingFilePaths = Directory.EnumerateFiles(folder, "*.*", enumerationOptions)
-                .Where(path => FileExtensions.Any(ext => FileSystemName.MatchesSimpleExpression(ext, path)));
-            foreach (var filePath in matchingFilePaths)
+            totalFiles++;
+            using var fileStream = File.OpenRead(path);
+            var hash = HashAlgorithm.Hash(fileStream);
+            if (HashedFilesCollection.Add(hash, path))
             {
-                using var fileStream = File.OpenRead(filePath);
-                var hash = HashAlgorithm.Hash(fileStream);
-                if (HashedFilesCollection.Add(hash, filePath))
+                yield return HashedFilesCollection.Get(hash);
+            }
+            if (CancellationToken.IsCancellationRequested)
+            {
+                yield break;
+            }
+            if (stopwatch.Elapsed - lastProgressUpdate >= TimeSpan.FromSeconds(1))
+            {
+                if (ProgressUpdate != null)
                 {
-                    yield return HashedFilesCollection.Get(hash);
+                    ProgressUpdate(this, new ProgressUpdateEventArgs
+                    {
+                        CurrentFolder = Path.GetDirectoryName(path),
+                        Elapsed = stopwatch.Elapsed,
+                        TotalFiles = totalFiles,
+                    });
                 }
-                if (CancellationToken.IsCancellationRequested)
-                {
-                    yield break;
-                }
+                lastProgressUpdate = stopwatch.Elapsed;
             }
         }
+    }
+
+    public class ProgressUpdateEventArgs : EventArgs
+    {
+        public string? CurrentFolder { get; init; }
+        public TimeSpan Elapsed { get; init; }
+        public int TotalFiles { get; init; }
+        public int FilesPerSecond => TotalFiles / (int)Math.Round(Elapsed.TotalSeconds);
     }
 }

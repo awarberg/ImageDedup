@@ -4,19 +4,19 @@ using Microsoft.Win32;
 using System.ComponentModel;
 using System.Windows;
 using ImageDedup.Shared;
+using static ImageDedup.Shared.ImageSourceProcessor;
 
 namespace ImageDedup.UI;
 
 public partial class MainWindow : Window
 {
+    private static readonly string[] _fileExtensions = ["*.png", "*.jpg"];
     private readonly ILogger<MainWindow> _logger;
-    private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly ViewModel _viewModel = new();
 
-    public MainWindow(ILogger<MainWindow> logger, CancellationTokenSource cancellationTokenSource)
+    public MainWindow(ILogger<MainWindow> logger)
     {
         _logger = logger;
-        _cancellationTokenSource = cancellationTokenSource;
         _viewModel.SearchFolders.Add(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures));
         _viewModel.AppStatus = AppStatus.Ready;
         DataContext = _viewModel;
@@ -27,15 +27,16 @@ public partial class MainWindow : Window
 
     private async void StartSearch_Click(object sender, EventArgs e)
     {
+        CancellationTokenSource cts = new();
+        _viewModel.CancellationTokenSource = cts;
         _viewModel.AppStatus = AppStatus.Searching;
-
-        var FileExtensions = new[] { "*.png", "*.jpg" };
         PerceptualHash hashAlgorithm = new();
         HashedFilesCollection hashedFilesCollection = new(_logger);
-        ImageSourceProcessor imageSourceProcessor = new(_viewModel.SearchFolders, FileExtensions, hashAlgorithm, hashedFilesCollection, _logger, _cancellationTokenSource.Token);
+        ImageSourceProcessor imageSourceProcessor = new(_viewModel.SearchFolders, _fileExtensions, hashAlgorithm, hashedFilesCollection, _logger, cts.Token);
 
         try
         {
+            imageSourceProcessor.ProgressUpdate += ImageSourceProcessor_ProgressUpdateChanged;
             await Task.Run(() =>
             {
                 foreach (var duplicatedFilesCollection in imageSourceProcessor.Invoke())
@@ -53,15 +54,22 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ImageSourceProcessor_ProgressUpdateChanged(object? sender, EventArgs e)
+    {
+        var progressUpdate = (ProgressUpdateEventArgs)e;
+        _viewModel.CurrentFolder = progressUpdate.CurrentFolder;
+        _viewModel.TotalFiles = progressUpdate.TotalFiles.ToString();
+        _viewModel.FilesPerSecond = progressUpdate.FilesPerSecond.ToString();
+    }
+
     private void StopSearch_Click(object sender, EventArgs e)
     {
-        _cancellationTokenSource.Cancel();
+        _viewModel.CancellationTokenSource.Cancel();
     }
 
     private void ResetSearch_Click(object sender, EventArgs e)
     {
         _viewModel.Reset();
-        _cancellationTokenSource.TryReset();
     }
 
     private void AddFolder_Click(object sender, EventArgs e)
@@ -98,7 +106,7 @@ public partial class MainWindow : Window
 
     private void Window_Closing(object sender, CancelEventArgs e)
     {
-        _cancellationTokenSource.Cancel();
+        _viewModel.CancellationTokenSource?.Cancel();
     }
 
     #endregion
