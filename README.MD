@@ -3,7 +3,7 @@ This is an image de-duplication tool. It uses the [ImageHash](https://github.com
 to find identical or similar images.
 
 # Prerequisites
-.NET 6 or later is required
+.NET 8 or later is required.
 
 # Usage
 To launch the tool, run the following command in a PowerShell:  
