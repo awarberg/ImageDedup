@@ -95,7 +95,7 @@ public partial class ViewModel : ObservableObject
             .FirstOrDefault(dfc => dfc.Hash == duplicatedFilesCollection.HashValue.Hash);
         if (previous is null)
         {
-            _backingSearchResults.Add(SearchResult.From(duplicatedFilesCollection));
+            SearchResults.Add(SearchResult.From(duplicatedFilesCollection));
             _backingSearchResults.Sort((x, y) => Comparer<ulong>.Default.Compare(x.Hash, y.Hash));
             SearchResults.ResetBindings();
         }
