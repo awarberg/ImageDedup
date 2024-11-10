@@ -57,6 +57,7 @@
                       Name="Master"
                       ItemsSource="{Binding SearchResults}" 
                       AutoGenerateColumns="False"
+                      SelectionMode="Single"
                       IsReadOnly="True">
                 <DataGrid.Columns>
                     <DataGridTextColumn Binding="{Binding Hash}" Header="Hash"/>
@@ -141,6 +142,8 @@
             <TextBlock>Current folder: <TextBlock Text="{Binding CurrentFolder}" /></TextBlock>
             <Separator />
             <TextBlock>Total files: <TextBlock Text="{Binding TotalFiles}" /></TextBlock>
+            <Separator />
+            <TextBlock>Processed files: <TextBlock Text="{Binding ProcessedFiles}" /></TextBlock>
             <Separator />
             <TextBlock>Files per second: <TextBlock Text="{Binding FilesPerSecond}" /></TextBlock>
         </StatusBar>

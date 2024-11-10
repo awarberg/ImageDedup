@@ -5,5 +5,6 @@ public enum AppStatus
     Ready,
     Searching,
     Completed,
+    Canceled,
     Failed,
 }

@@ -10,7 +10,7 @@ namespace ImageDedup.UI;
 
 public partial class MainWindow : Window
 {
-    private static readonly string[] _fileExtensions = ["*.png", "*.jpg"];
+    private static readonly string[] FileExtensions = ["*.png", "*.jpg"];
     private readonly ILogger<MainWindow> _logger;
     private readonly ViewModel _viewModel = new();
 
@@ -32,20 +32,26 @@ public partial class MainWindow : Window
         _viewModel.AppStatus = AppStatus.Searching;
         PerceptualHash hashAlgorithm = new();
         HashedFilesCollection hashedFilesCollection = new(_logger);
-        ImageSourceProcessor imageSourceProcessor = new(_viewModel.SearchFolders, _fileExtensions, hashAlgorithm, hashedFilesCollection, _logger, cts.Token);
+        ImageSourceProcessor imageSourceProcessor = new(_viewModel.SearchFolders, FileExtensions, hashAlgorithm,
+            hashedFilesCollection, _logger, cts.Token);
 
         try
         {
             imageSourceProcessor.ProgressUpdate += ImageSourceProcessor_ProgressUpdateChanged;
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
-                foreach (var duplicatedFilesCollection in imageSourceProcessor.Invoke())
+                await foreach (var duplicatedFilesCollection in imageSourceProcessor.Invoke()
+                                   .WithCancellation(cts.Token))
                 {
                     UpdateViewModel(duplicatedFilesCollection);
                 }
-            });
+            }, cts.Token);
 
             _viewModel.AppStatus = AppStatus.Completed;
+        }
+        catch (OperationCanceledException)
+        {
+            _viewModel.AppStatus = AppStatus.Canceled;
         }
         catch (Exception ex)
         {
@@ -59,6 +65,7 @@ public partial class MainWindow : Window
         var progressUpdate = (ProgressUpdateEventArgs)e;
         _viewModel.CurrentFolder = progressUpdate.CurrentFolder;
         _viewModel.TotalFiles = progressUpdate.TotalFiles.ToString();
+        _viewModel.ProcessedFiles = progressUpdate.ProcessedFiles.ToString();
         _viewModel.FilesPerSecond = progressUpdate.FilesPerSecond.ToString();
     }
 
@@ -114,9 +121,6 @@ public partial class MainWindow : Window
 
     private void UpdateViewModel(DuplicatedFilesCollection duplicatedFilesCollection)
     {
-        Dispatcher.Invoke(() =>
-        {
-            _viewModel.AddOrMerge(duplicatedFilesCollection);
-        });
+        Dispatcher.Invoke(() => { _viewModel.AddOrMerge(duplicatedFilesCollection); });
     }
 }

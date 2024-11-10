@@ -25,7 +25,7 @@ public class HashedFilesCollection
         else
         {
             isHit = false;
-            hashedFiles = new();
+            hashedFiles = [];
             _hashedFiles.Add(hashValue, hashedFiles);
         }
 
@@ -37,7 +37,7 @@ public class HashedFilesCollection
         if (isHit)
         {
             _hits++;
-            _logger.LogInformation("Hit for hash {0}: \n{1}", hash, string.Join("\n", hashedFiles));
+            _logger.LogInformation("Hit for hash {Hash}: \n{Files}", hash, string.Join("\n", hashedFiles));
             return true;
         }
 

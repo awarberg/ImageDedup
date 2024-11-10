@@ -7,7 +7,6 @@ namespace ImageDedup.UI;
 public partial class App : Application
 {
     private readonly ServiceProvider _serviceProvider;
-    private readonly CancellationTokenSource _cancellationTokenSource = new();
 
     public App()
     {
@@ -16,7 +15,6 @@ public partial class App : Application
             .AddLogging(configure => configure
                 .SetMinimumLevel(LogLevel.Debug)
                 .AddConsole())
-            .AddSingleton(_cancellationTokenSource)
             .BuildServiceProvider();
     }
 

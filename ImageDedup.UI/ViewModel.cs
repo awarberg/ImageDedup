@@ -10,6 +10,7 @@ namespace ImageDedup.UI;
 public partial class ViewModel : ObservableObject
 {
     private readonly List<SearchResult> _backingSearchResults = [];
+
     public ViewModel()
     {
         SearchResults = new(_backingSearchResults);
@@ -31,22 +32,21 @@ public partial class ViewModel : ObservableObject
         nameof(CanRemoveFolders))]
     private AppStatus _appStatus = AppStatus.Ready;
 
-    public bool CanStartSearch => AppStatus == AppStatus.Ready;
+    public bool CanStartSearch => AppStatus is AppStatus.Ready or AppStatus.Canceled && SearchFolders.Count > 0;
     public bool CanStopSearch => AppStatus == AppStatus.Searching;
-    public bool CanResetSearch => AppStatus == AppStatus.Completed;
-    public bool CanAddFolder => AppStatus == AppStatus.Ready;
-    public bool CanRemoveFolders => AppStatus == AppStatus.Ready;
+    public bool CanResetSearch => AppStatus is AppStatus.Completed or AppStatus.Canceled;
+    public bool CanAddFolder => AppStatus is AppStatus.Ready or AppStatus.Canceled;
+    public bool CanRemoveFolders => AppStatus is AppStatus.Ready or AppStatus.Canceled;
 
     public BindingList<string> SearchFolders { get; } = [];
 
-    [ObservableProperty]
-    public string? _currentFolder;
+    [ObservableProperty] public string? _currentFolder;
 
-    [ObservableProperty]
-    public string? _totalFiles;
+    [ObservableProperty] public string? _totalFiles;
 
-    [ObservableProperty]
-    public string? _filesPerSecond;
+    [ObservableProperty] public string? _processedFiles;
+
+    [ObservableProperty] public string? _filesPerSecond;
 
     public BindingList<SearchResult> SearchResults { get; }
 
@@ -55,20 +55,18 @@ public partial class ViewModel : ObservableObject
         .OrderBy(df => df.Path)
         .ToList();
 
-    [ObservableProperty]
-    private int _previewHeight = 300;
+    [ObservableProperty] private int _previewHeight = 300;
 
-    [ObservableProperty]
-    private bool _useRecycleBin = true;
+    [ObservableProperty] private bool _useRecycleBin = true;
 
-    [ObservableProperty]
-    private Exception? _lastException;
+    [ObservableProperty] private Exception? _lastException;
 
     [RelayCommand(CanExecute = nameof(CanDeleteMarkedDuplicates))]
     private void DeleteMarkedDuplicates()
     {
         var markedDuplicates = MarkedDuplicates;
-        MessageBoxResult messageBoxResult = MessageBox.Show($"Delete {markedDuplicates.Count} file(s)?", "Delete Confirmation", System.Windows.MessageBoxButton.YesNo);
+        MessageBoxResult messageBoxResult = MessageBox.Show($"Delete {markedDuplicates.Count} file(s)?",
+            "Delete Confirmation", System.Windows.MessageBoxButton.YesNo);
         if (messageBoxResult == MessageBoxResult.Yes)
         {
             foreach (var duplicateFile in markedDuplicates)
@@ -76,9 +74,7 @@ public partial class ViewModel : ObservableObject
                 // TODO: Recycle bin does not work for network shares.
                 FileSystem.DeleteFile(duplicateFile.Path,
                     UIOption.OnlyErrorDialogs,
-                    UseRecycleBin ?
-                        RecycleOption.SendToRecycleBin :
-                        RecycleOption.DeletePermanently);
+                    UseRecycleBin ? RecycleOption.SendToRecycleBin : RecycleOption.DeletePermanently);
                 duplicateFile.IsDeleted = true;
             }
         }
@@ -116,6 +112,7 @@ public partial class ViewModel : ObservableObject
     {
         CurrentFolder = string.Empty;
         TotalFiles = string.Empty;
+        ProcessedFiles = string.Empty;
         FilesPerSecond = string.Empty;
     }
 }
