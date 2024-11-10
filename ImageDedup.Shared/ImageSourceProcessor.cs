@@ -58,7 +58,7 @@ public record ImageSourceProcessor(
             addToCollectionAction.Post((input.path, hash));
 
             UpdateProgressIfNecessary(input.path);
-        }, new() { MaxDegreeOfParallelism = processorCount / 2, CancellationToken = CancellationToken });
+        }, new() { MaxDegreeOfParallelism = Math.Max(1, processorCount / 2), CancellationToken = CancellationToken });
 
         var loadImageAction = new ActionBlock<string>(path =>
         {
@@ -68,7 +68,7 @@ public record ImageSourceProcessor(
             hashAction.Post((path, image));
 
             UpdateProgressIfNecessary(path);
-        }, new() { MaxDegreeOfParallelism = processorCount / 4, CancellationToken = CancellationToken });
+        }, new() { MaxDegreeOfParallelism = Math.Max(1, processorCount / 4), CancellationToken = CancellationToken });
 
         foreach (var path in paths)
         {
